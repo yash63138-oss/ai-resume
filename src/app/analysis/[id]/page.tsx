@@ -109,12 +109,13 @@ const SECTION_LABELS: Record<string, string> = {
 export default async function AnalysisPage({
   params,
 }: {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }) {
   const session = await auth()
   if (!session?.user) redirect('/login')
 
-  const analysis = await getAnalysis(params.id, session.user.id!)
+  const { id } = await params
+  const analysis = await getAnalysis(id, session.user.id!)
   if (!analysis) notFound()
 
   const sectionScores = analysis.sectionScores as Record<string, number>
