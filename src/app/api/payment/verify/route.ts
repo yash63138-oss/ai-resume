@@ -43,9 +43,12 @@ export async function POST(req: NextRequest) {
 
     // Update payment + add credits atomically
     const [, wallet] = await prisma.$transaction(async (tx) => {
-      // Update payment record
-      const payment = await tx.payment.update({
+      // Update payment record (findFirst since gatewayOrderId is not @unique)
+      const existingOrder = await tx.payment.findFirst({
         where: { gatewayOrderId: razorpay_order_id },
+      })
+      const payment = await tx.payment.update({
+        where: { id: existingOrder?.id ?? '' },
         data: {
           gatewayPaymentId: razorpay_payment_id,
           status: 'SUCCESS',

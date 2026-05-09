@@ -83,8 +83,8 @@ export default function AnalysisLoading() {
               <Skeleton className="h-5 w-36" />
             </div>
             <div className="flex flex-wrap gap-2">
-              {Array.from({ length: 8 }).map((_, j) => (
-                <Skeleton key={j} className="h-7 rounded-full" style={{ width: `${60 + j * 10}px` }} />
+              {['w-16', 'w-20', 'w-24', 'w-28', 'w-16', 'w-24', 'w-20', 'w-28'].map((w, j) => (
+                <Skeleton key={j} className={`h-7 rounded-full ${w}`} />
               ))}
             </div>
           </div>

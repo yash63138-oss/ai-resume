@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { useDropzone } from 'react-dropzone'
+import { useDropzone, FileRejection } from 'react-dropzone'
 import {
   Upload,
   FileText,
@@ -48,7 +48,7 @@ export default function UploadPage() {
   const [progress, setProgress] = useState(0)
 
   const onDrop = useCallback(
-    (accepted: File[], rejected: { errors: { message: string }[] }[]) => {
+    (accepted: File[], rejected: FileRejection[]) => {
       if (rejected.length > 0) {
         const msg =
           rejected[0].errors[0]?.message ||
@@ -269,7 +269,7 @@ export default function UploadPage() {
           </div>
           {state === 'analyzing' && (
             <p className="text-xs text-white/30">
-              GPT-4o is reading every section of your resume. This takes 15–30 seconds.
+              Llama 3.3 is reading every section of your resume. This takes 10–20 seconds.
             </p>
           )}
         </div>

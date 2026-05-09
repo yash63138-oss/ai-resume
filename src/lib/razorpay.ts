@@ -1,10 +1,15 @@
 import Razorpay from 'razorpay'
 import crypto from 'crypto'
 
-export const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID!,
-  key_secret: process.env.RAZORPAY_KEY_SECRET!,
-})
+// Lazy initialization — prevents build-time crash when keys are not set
+function getRazorpayClient() {
+  const key_id = process.env.RAZORPAY_KEY_ID
+  const key_secret = process.env.RAZORPAY_KEY_SECRET
+  if (!key_id || !key_secret) {
+    throw new Error('Razorpay keys are not configured')
+  }
+  return new Razorpay({ key_id, key_secret })
+}
 
 export interface CreditPack {
   id: string
@@ -75,7 +80,7 @@ export async function createRazorpayOrder(
   const pack = CREDIT_PACKS.find((p) => p.id === packId)
   if (!pack) throw new Error('Invalid credit pack')
 
-  const order = await razorpay.orders.create({
+  const order = await getRazorpayClient().orders.create({
     amount: pack.priceInr,
     currency: 'INR',
     notes: {
