@@ -96,7 +96,7 @@ function LoginContent() {
               ) : (
                 <Chrome className="w-4 h-4" />
               )}
-              Continue with Google
+              Continue with Google / Gmail
             </button>
           </div>
 

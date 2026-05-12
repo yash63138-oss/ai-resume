@@ -121,7 +121,7 @@ export default function RegisterPage() {
               className="btn-secondary w-full justify-center"
             >
               {oauthLoading === 'google' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Chrome className="w-4 h-4" />}
-              Continue with Google
+              Continue with Google / Gmail
             </button>
           </div>
 
