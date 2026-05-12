@@ -192,9 +192,52 @@ function LoginContent() {
 }
 
 
+function LoginSkeleton() {
+  return (
+    <div className="min-h-screen mesh-bg flex items-center justify-center p-4">
+      <div className="relative w-full max-w-md">
+        {/* Back link skeleton */}
+        <div className="h-4 w-24 bg-white/10 rounded mb-8 animate-pulse" />
+
+        <div className="premium-card p-8">
+          {/* Logo skeleton */}
+          <div className="flex flex-col items-center mb-8">
+            <div className="w-12 h-12 rounded-2xl bg-white/10 animate-pulse mb-4" />
+            <div className="h-7 w-40 bg-white/10 rounded animate-pulse mb-2" />
+            <div className="h-4 w-52 bg-white/5 rounded animate-pulse" />
+          </div>
+
+          {/* Google button skeleton */}
+          <div className="h-11 w-full rounded-xl bg-white/10 animate-pulse mb-6" />
+
+          {/* Divider skeleton */}
+          <div className="h-4 w-full bg-white/5 rounded animate-pulse mb-6" />
+
+          {/* Email field skeleton */}
+          <div className="space-y-4">
+            <div>
+              <div className="h-3 w-24 bg-white/10 rounded animate-pulse mb-2" />
+              <div className="h-11 w-full rounded-xl bg-white/10 animate-pulse" />
+            </div>
+            <div>
+              <div className="h-3 w-20 bg-white/10 rounded animate-pulse mb-2" />
+              <div className="h-11 w-full rounded-xl bg-white/10 animate-pulse" />
+            </div>
+            {/* Sign in button skeleton */}
+            <div className="h-11 w-full rounded-xl bg-brand-500/30 animate-pulse mt-2" />
+          </div>
+
+          {/* Bottom link skeleton */}
+          <div className="h-4 w-48 bg-white/5 rounded animate-pulse mx-auto mt-6" />
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-surface-900 flex items-center justify-center"><div className="w-8 h-8 border-2 border-brand-500/30 border-t-brand-500 rounded-full animate-spin" /></div>}>
+    <Suspense fallback={<LoginSkeleton />}>
       <LoginContent />
     </Suspense>
   )
