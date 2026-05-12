@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import toast from 'react-hot-toast'
 import {
   Brain,
   LayoutDashboard,
@@ -276,6 +277,7 @@ export default function DashboardShell({
           <div className="flex items-center gap-3">
             <button
               id="notifications-btn"
+              onClick={() => toast('You have no new notifications.', { icon: '🔔' })}
               className="btn-ghost p-2 relative"
               aria-label="Notifications"
             >

@@ -1,46 +1,10 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { Coins, Star, Zap, ArrowRight, Loader2, CheckCircle2, CreditCard, TrendingUp, TrendingDown, Gift } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { Coins, Star, Zap, ArrowRight, Loader2, CreditCard, TrendingUp, TrendingDown, Gift } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { CREDIT_PACKS, type CreditPack } from '@/lib/razorpay'
-
-declare global {
-  interface Window {
-    Razorpay: new (options: RazorpayOptions) => { open: () => void }
-  }
-}
-
-interface RazorpayOptions {
-  key: string
-  amount: number
-  currency: string
-  name: string
-  description: string
-  order_id: string
-  handler: (response: RazorpayResponse) => void
-  prefill?: { name?: string; email?: string }
-  theme?: { color?: string }
-  modal?: { ondismiss?: () => void }
-}
-
-interface RazorpayResponse {
-  razorpay_order_id: string
-  razorpay_payment_id: string
-  razorpay_signature: string
-}
-
-function loadRazorpayScript(): Promise<boolean> {
-  return new Promise((resolve) => {
-    if (window.Razorpay) return resolve(true)
-    const script = document.createElement('script')
-    script.src = 'https://checkout.razorpay.com/v1/checkout.js'
-    script.onload = () => resolve(true)
-    script.onerror = () => resolve(false)
-    document.body.appendChild(script)
-  })
-}
+import { CREDIT_PACKS, type CreditPack } from '@/lib/pricing'
 
 interface WalletClientProps {
   balance: number
@@ -66,80 +30,87 @@ const TYPE_CONFIG: Record<string, { label: string; color: string; bg: string; ic
 
 export default function WalletClient({ balance, transactions, userName, userEmail }: WalletClientProps) {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [buyingPack, setBuyingPack] = useState<string | null>(null)
+  const [verifying, setVerifying] = useState(false)
+
+  // Verify Stripe payment on return
+  useEffect(() => {
+    const sessionId = searchParams.get('session_id')
+    const canceled = searchParams.get('canceled')
+
+    if (canceled) {
+      toast('Payment cancelled — your credits are unchanged.', { icon: '⚠️' })
+      // Force a full server re-fetch so stale cached balance is never shown
+      router.replace('/dashboard/wallet')
+      router.refresh()
+      return
+    }
+
+    if (sessionId) {
+      setVerifying(true)
+      fetch('/api/payment/stripe/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success) {
+            if (data.creditsAdded) {
+              toast.success(`🎉 ${data.creditsAdded} credits added! New balance: ${data.newBalance}`)
+            } else {
+              toast('Credits already applied to your account.', { icon: '✅' })
+            }
+          } else {
+            toast.error(data.error || 'Failed to verify payment. Contact support.')
+          }
+        })
+        .catch(() => {
+          toast.error('Payment verification failed. Try refreshing.')
+        })
+        .finally(() => {
+          setVerifying(false)
+          router.replace('/dashboard/wallet')
+          router.refresh()
+        })
+    }
+  }, [searchParams, router])
+
 
   const handleBuyCredits = async (pack: CreditPack) => {
     setBuyingPack(pack.id)
     try {
-      const loaded = await loadRazorpayScript()
-      if (!loaded) {
-        toast.error('Failed to load payment gateway. Please check your connection.')
-        return
-      }
-
-      const orderRes = await fetch('/api/payment/create-order', {
+      const res = await fetch('/api/payment/stripe/create-checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ packId: pack.id }),
       })
 
-      if (!orderRes.ok) {
-        const data = await orderRes.json()
-        throw new Error(data.error || 'Failed to create order')
+      const data = await res.json()
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to initialize checkout')
       }
 
-      const { orderId, amount, currency, keyId } = await orderRes.json()
-
-      const razorpay = new window.Razorpay({
-        key: keyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || '',
-        amount,
-        currency,
-        name: 'ResumeAI',
-        description: `${pack.credits} Credits — ${pack.name} Pack`,
-        order_id: orderId,
-        prefill: { name: userName, email: userEmail },
-        theme: { color: '#4f5eff' },
-        handler: async (response) => {
-          try {
-            const verifyRes = await fetch('/api/payment/verify', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
-                packId: pack.id,
-              }),
-            })
-            const data = await verifyRes.json()
-            if (verifyRes.ok) {
-              toast.success(`🎉 ${data.creditsAdded} credits added! New balance: ${data.newBalance}`)
-              router.refresh()
-            } else {
-              toast.error(data.error || 'Payment verification failed')
-            }
-          } catch {
-            toast.error('Payment verification failed. Contact support if credits were deducted.')
-          }
-        },
-        modal: {
-          ondismiss: () => {
-            toast('Payment cancelled', { icon: '⚠️' })
-            setBuyingPack(null)
-          },
-        },
-      })
-
-      razorpay.open()
+      if (data.url) {
+        window.location.href = data.url
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Payment failed. Please try again.')
-    } finally {
       setBuyingPack(null)
     }
   }
 
   return (
-    <div className="space-y-6 animate-in">
+    <div className="space-y-6 animate-in relative">
+      {verifying && (
+        <div className="absolute inset-0 z-50 bg-surface-DEFAULT/50 backdrop-blur-sm flex flex-col items-center justify-center rounded-2xl">
+          <Loader2 className="w-10 h-10 animate-spin text-brand-500 mb-4" />
+          <p className="font-medium text-lg">Verifying your payment...</p>
+        </div>
+      )}
+
       {/* Header */}
       <div>
         <h1 className="text-2xl font-display font-bold">Wallet & Credits</h1>
@@ -178,7 +149,7 @@ export default function WalletClient({ balance, transactions, userName, userEmai
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {CREDIT_PACKS.map((pack) => {
             const isBuying = buyingPack === pack.id
-            const isDisabled = buyingPack !== null
+            const isDisabled = buyingPack !== null || verifying
             return (
               <button
                 key={pack.id}
@@ -236,7 +207,7 @@ export default function WalletClient({ balance, transactions, userName, userEmai
           })}
         </div>
         <p className="text-xs text-white/25 mt-3 text-center">
-          Secure payment via Razorpay &bull; Credits never expire &bull; Instant delivery
+          Secure payment via Stripe &bull; Credits never expire &bull; Instant delivery
         </p>
       </div>
 

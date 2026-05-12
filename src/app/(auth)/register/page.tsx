@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Brain, Eye, EyeOff, Github, Chrome, Loader2, ArrowLeft, CheckCircle2, Sparkles } from 'lucide-react'
+import { Brain, Eye, EyeOff, Chrome, Loader2, ArrowLeft, CheckCircle2, Sparkles } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { createClient } from '@/lib/supabase/client'
 
@@ -64,7 +64,7 @@ export default function RegisterPage() {
     }
   }
 
-  const handleOAuth = async (provider: 'google' | 'github') => {
+  const handleOAuth = async (provider: 'google') => {
     setOauthLoading(provider)
     try {
       const { error } = await supabase.auth.signInWithOAuth({
@@ -122,15 +122,6 @@ export default function RegisterPage() {
             >
               {oauthLoading === 'google' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Chrome className="w-4 h-4" />}
               Continue with Google
-            </button>
-            <button
-              id="register-github-btn"
-              onClick={() => handleOAuth('github')}
-              disabled={!!oauthLoading}
-              className="btn-secondary w-full justify-center"
-            >
-              {oauthLoading === 'github' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Github className="w-4 h-4" />}
-              Continue with GitHub
             </button>
           </div>
 
