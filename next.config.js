@@ -19,15 +19,15 @@ const nextConfig = {
     // CSP — tighter in production
     const csp = [
       "default-src 'self'",
-      // Scripts: allow Razorpay checkout, Google fonts
+      // Scripts: allow Stripe, Google fonts, and inline scripts for Next.js hydration
       isDev
-        ? "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://checkout.razorpay.com"
-        : "script-src 'self' https://checkout.razorpay.com",
+        ? "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://js.stripe.com"
+        : "script-src 'self' 'unsafe-inline' https://js.stripe.com",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com",
       "img-src 'self' data: blob: https://*.supabase.co https://lh3.googleusercontent.com https://avatars.githubusercontent.com",
-      "connect-src 'self' https://api.openai.com https://api.razorpay.com https://*.supabase.co",
-      "frame-src https://api.razorpay.com",
+      "connect-src 'self' https://api.openai.com https://api.stripe.com https://*.supabase.co",
+      "frame-src https://js.stripe.com https://hooks.stripe.com",
       "object-src 'none'",
       "base-uri 'self'",
       "form-action 'self'",
